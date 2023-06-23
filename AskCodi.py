@@ -32,8 +32,7 @@ URL = "https://app.askcodi.com/api/askcodi-extension/"
 def update_status_bar(message):
     try:
         if message:
-            active_window = sublime.active_window()
-            if active_window:
+            if active_window := sublime.active_window():
                 for view in active_window.views():
                     view.set_status('AskCodi', message)
     except:
@@ -47,8 +46,7 @@ class ApiKey(object):
         if self._key:
             return self._key
 
-        key = SETTINGS.get('api_key')
-        if key:
+        if key := SETTINGS.get('api_key'):
             self._key = key
             return self._key
 
@@ -82,13 +80,11 @@ def prompt_api_key():
 
 def plugin_loaded():
     global SETTINGS
-    settings_exist = False;
     SETTINGS = sublime.load_settings(SETTINGS_FILE)
-    for file in sublime.find_resources("AskCodi.sublime-settings"):
-        if 'Packages/User' in file:
-            settings_exist = True
-            break
-
+    settings_exist = any(
+        'Packages/User' in file
+        for file in sublime.find_resources("AskCodi.sublime-settings")
+    )
     if not settings_exist:
         SETTINGS.set('api_key', '')
         SETTINGS.set('generate_code', True)
@@ -97,7 +93,7 @@ def plugin_loaded():
         SETTINGS.set('document_code', True)
         SETTINGS.set('context', True)
         sublime.save_settings(SETTINGS_FILE)
-    
+
     SETTINGS = sublime.load_settings(SETTINGS_FILE)
 
     update_status_bar('Initializing AskCodi...')
@@ -127,7 +123,7 @@ def ask_codi_api(app, query, context, self, edit):
             messages = [{'role': 'user', 'content': context}, {'role': 'user', 'content': query}]
         else:
             messages = [{'role': 'user', 'content': query}]
-        
+
         data = {
             "messages": messages,
             "language": language,
@@ -138,7 +134,7 @@ def ask_codi_api(app, query, context, self, edit):
             req = request.Request(URL, data=data, headers=headers)
             response = request.urlopen(req).read().decode('utf-8')
             print(response)
-        
+
             # parse json response
             resp = json.loads(response)
             print(resp)
@@ -164,7 +160,6 @@ def ask_codi_api(app, query, context, self, edit):
     except Exception as e:
         print(e)
         update_status_bar("AskCodi: Couldn't complete request.")
-        pass
 
 
 class GenerateCodeCommand(sublime_plugin.TextCommand):
